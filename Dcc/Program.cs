@@ -22,6 +22,7 @@ namespace Tiesmaster.Dcc
                 .UseStartup<Startup>()
                 .Build();
 
+            // TODO: fix libuv missing
             host.Run();
         }
     }
