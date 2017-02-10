@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 
@@ -11,6 +12,11 @@ namespace Tiesmaster.Dcc
 {
     public class Startup
     {
+        private static readonly string _host = "jsonplaceholder.typicode.com";
+        private static readonly int _port = 80;
+        private static readonly string _scheme = "http";
+        private static readonly HttpClient _httpClient = new HttpClient();
+
         public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
         {
             loggerFactory.AddConsole();
@@ -45,8 +51,8 @@ namespace Tiesmaster.Dcc
                 }
             }
 
-            requestMessage.Headers.Host = _options.Host + ":" + _options.Port;
-            var uriString = $"{_options.Scheme}://{_options.Host}:{_options.Port}{context.Request.PathBase}{context.Request.Path}{context.Request.QueryString}";
+            requestMessage.Headers.Host = _host + ":" + _port;
+            var uriString = $"{_scheme}://{_host}:{_port}{context.Request.PathBase}{context.Request.Path}{context.Request.QueryString}";
             requestMessage.RequestUri = new Uri(uriString);
             requestMessage.Method = new HttpMethod(context.Request.Method);
             using(var responseMessage = await _httpClient.SendAsync(requestMessage, HttpCompletionOption.ResponseHeadersRead, context.RequestAborted))
@@ -66,5 +72,6 @@ namespace Tiesmaster.Dcc
                 context.Response.Headers.Remove("transfer-encoding");
                 await responseMessage.Content.CopyToAsync(context.Response.Body);
             }
+        }
     }
 }
