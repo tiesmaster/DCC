@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -16,6 +17,7 @@ namespace Tiesmaster.Dcc
         private static readonly int _port = 80;
         private static readonly string _scheme = "http";
         private static readonly HttpClient _httpClient = new HttpClient();
+        private static readonly Dictionary<RequestHash, HttpResponseMessage> _tapes = new Dictionary<RequestHash, HttpResponseMessage>();
 
         public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
         {
@@ -32,13 +34,22 @@ namespace Tiesmaster.Dcc
         private static async Task RunDccProxyAsync(HttpContext context)
         {
             var incomingRequest = context.Request;
-
-            var outgoingRequest = CloneRequestMessage(incomingRequest);
-            RewriteDestination(outgoingRequest, incomingRequest);
+            var requestHash = new RequestHash(incomingRequest);
 
             var outgoingResponse = context.Response;
-            using(var incomingResponse = await _httpClient.SendAsync(outgoingRequest, HttpCompletionOption.ResponseHeadersRead, context.RequestAborted))
+
+            HttpResponseMessage tapedResponse;
+            if(_tapes.TryGetValue(requestHash, out tapedResponse))
             {
+                await CloneResponseMessageToAsync(outgoingResponse, tapedResponse);
+            }
+            else
+            {
+                var outgoingRequest = CloneRequestMessage(incomingRequest);
+                RewriteDestination(outgoingRequest, incomingRequest);
+
+                var incomingResponse = await _httpClient.SendAsync(outgoingRequest, HttpCompletionOption.ResponseHeadersRead, context.RequestAborted);
+                _tapes[requestHash] = incomingResponse;
                 await CloneResponseMessageToAsync(outgoingResponse, incomingResponse);
             }
         }
@@ -99,6 +110,18 @@ namespace Tiesmaster.Dcc
                     clonedRequestMessage.Content?.Headers.TryAddWithoutValidation(header.Key, header.Value.ToArray());
                 }
             }
+        }
+    }
+
+    internal struct RequestHash
+    {
+        private readonly string _method;
+        private readonly PathString _path;
+
+        public RequestHash(HttpRequest request)
+        {
+            _method = request.Method;
+            _path = request.Path;
         }
     }
 }
