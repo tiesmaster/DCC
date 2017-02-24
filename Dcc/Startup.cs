@@ -17,7 +17,7 @@ namespace Tiesmaster.Dcc
         private static readonly int _port = 80;
         private static readonly string _scheme = "http";
         private static readonly HttpClient _httpClient = new HttpClient();
-        private static readonly Dictionary<RequestHash, HttpResponseMessage> _tapes = new Dictionary<RequestHash, HttpResponseMessage>();
+        private static readonly Dictionary<RequestHash, Tuple<HttpResponseMessage, byte[]>> _tapes = new Dictionary<RequestHash, Tuple<HttpResponseMessage, byte[]>>();
 
         public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
         {
@@ -38,10 +38,12 @@ namespace Tiesmaster.Dcc
 
             var outgoingResponse = context.Response;
 
-            HttpResponseMessage tapedResponse;
-            if(_tapes.TryGetValue(requestHash, out tapedResponse))
+            Tuple<HttpResponseMessage, byte[]> tapedTuple;
+            if(_tapes.TryGetValue(requestHash, out tapedTuple))
             {
-                await CloneResponseMessageToAsync(outgoingResponse, tapedResponse);
+                var tapedResponse = tapedTuple.Item1;
+                var tapedBody = tapedTuple.Item2;
+                CloneResponseMessageTo(outgoingResponse, tapedResponse, tapedBody);
             }
             else
             {
@@ -49,8 +51,9 @@ namespace Tiesmaster.Dcc
                 RewriteDestination(outgoingRequest, incomingRequest);
 
                 var incomingResponse = await _httpClient.SendAsync(outgoingRequest, HttpCompletionOption.ResponseHeadersRead, context.RequestAborted);
-                _tapes[requestHash] = incomingResponse;
-                await CloneResponseMessageToAsync(outgoingResponse, incomingResponse);
+                var body = await incomingResponse.Content.ReadAsByteArrayAsync();
+                _tapes[requestHash] = Tuple.Create(incomingResponse, body);
+                CloneResponseMessageTo(outgoingResponse, incomingResponse, body);
             }
         }
 
@@ -67,7 +70,7 @@ namespace Tiesmaster.Dcc
             return clonedRequest;
         }
 
-        private static Task CloneResponseMessageToAsync(HttpResponse outgoingResponse, HttpResponseMessage incomingResponse)
+        private static void CloneResponseMessageTo(HttpResponse outgoingResponse, HttpResponseMessage incomingResponse, byte[] body)
         {
             outgoingResponse.StatusCode = (int)incomingResponse.StatusCode;
             foreach(var header in incomingResponse.Headers)
@@ -82,7 +85,10 @@ namespace Tiesmaster.Dcc
 
             // SendAsync removes chunking from the response. This removes the header so it doesn't expect a chunked response.
             outgoingResponse.Headers.Remove("transfer-encoding");
-            return incomingResponse.Content.CopyToAsync(outgoingResponse.Body);
+            foreach(var b in body)
+            {
+                outgoingResponse.Body.WriteByte(b);
+            }
         }
 
         private static void RewriteDestination(HttpRequestMessage clonedRequest, HttpRequest originalRequest)
