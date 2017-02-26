@@ -8,10 +8,10 @@ namespace Tiesmaster.Dcc
     public static class DccExtension
     {
         /// <summary>
-        /// Sends request to remote server as specified in options
+        /// Run DCC record and playback reverse proxy server.
         /// </summary>
         /// <param name="app"></param>
-        public static void RunProxy(this IApplicationBuilder app)
+        public static void RunDcc(this IApplicationBuilder app)
         {
             if (app == null)
             {
@@ -22,11 +22,11 @@ namespace Tiesmaster.Dcc
         }
 
         /// <summary>
-        /// Sends request to remote server as specified in options
+        /// Run DCC record and playback reverse proxy server.
         /// </summary>
         /// <param name="app"></param>
-        /// <param name="options">Options for setting port, host, and scheme</param>
-        public static void RunProxy(this IApplicationBuilder app, DccOptions options)
+        /// <param name="options">Options for overriding the defaults of DCC</param>
+        public static void RunDcc(this IApplicationBuilder app, DccOptions options)
         {
             if (app == null)
             {
