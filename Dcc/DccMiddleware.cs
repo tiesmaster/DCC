@@ -27,25 +27,6 @@ namespace Tiesmaster.Dcc
                 throw new ArgumentException("Options parameter must specify host.", nameof(options));
             }
 
-            // Setting default Port and Scheme if not specified
-            if (string.IsNullOrEmpty(_options.Port))
-            {
-                if (string.Equals(_options.Scheme, "https", StringComparison.OrdinalIgnoreCase))
-                {
-                    _options.Port = "443";
-                }
-                else
-                {
-                    _options.Port = "80";
-                }
-
-            }
-
-            if (string.IsNullOrEmpty(_options.Scheme))
-            {
-                _options.Scheme = "http";
-            }
-
             _httpClient = new HttpClient(_options.BackChannelMessageHandler ?? new HttpClientHandler());
         }
 
@@ -72,7 +53,7 @@ namespace Tiesmaster.Dcc
             }
 
             requestMessage.Headers.Host = _options.Host + ":" + _options.Port;
-            var uriString = $"{_options.Scheme}://{_options.Host}:{_options.Port}{context.Request.PathBase}{context.Request.Path}{context.Request.QueryString}";
+            var uriString = $"http://{_options.Host}:{_options.Port}{context.Request.PathBase}{context.Request.Path}{context.Request.QueryString}";
             requestMessage.RequestUri = new Uri(uriString);
             requestMessage.Method = new HttpMethod(context.Request.Method);
             using (var responseMessage = await _httpClient.SendAsync(requestMessage, HttpCompletionOption.ResponseHeadersRead, context.RequestAborted))
