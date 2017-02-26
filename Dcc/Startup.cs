@@ -13,8 +13,8 @@ namespace Tiesmaster.Dcc
 {
     public class Startup
     {
-        private static readonly string _host = "jsonplaceholder.typicode.com";
-        private static readonly int _port = 80;
+        private static readonly string _host = "localhost";
+        private static readonly int _port = 3000;
         private static readonly string _scheme = "http";
         private static readonly HttpClient _httpClient = new HttpClient();
         private static readonly Dictionary<RequestHash, Tuple<HttpResponseMessage, byte[]>> _tapes = new Dictionary<RequestHash, Tuple<HttpResponseMessage, byte[]>>();
