@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -12,6 +13,12 @@ namespace Tiesmaster.Dcc
     {
         private readonly HttpClient _httpClient;
         private readonly DccOptions _options;
+        // ReSharper disable once InconsistentNaming
+        // TODO: fix resharper settings
+        private const string _scheme = "http";
+
+        private static readonly Dictionary<RequestHash, Tuple<HttpResponseMessage, byte[]>> _tapes =
+            new Dictionary<RequestHash, Tuple<HttpResponseMessage, byte[]>>();
 
         public DccMiddleware(RequestDelegate next, IOptions<DccOptions> options)
         {
@@ -32,46 +39,88 @@ namespace Tiesmaster.Dcc
 
         public async Task Invoke(HttpContext context)
         {
-            var requestMessage = new HttpRequestMessage();
-            var requestMethod = context.Request.Method;
-            if (!HttpMethods.IsGet(requestMethod)&&
-                !HttpMethods.IsHead(requestMethod) &&
-                !HttpMethods.IsDelete(requestMethod)&&
-                !HttpMethods.IsTrace(requestMethod))
+            var incomingRequest = context.Request;
+            var requestHash = new RequestHash(incomingRequest);
+
+            var outgoingResponse = context.Response;
+
+            Tuple<HttpResponseMessage, byte[]> tapedTuple;
+            if(_tapes.TryGetValue(requestHash, out tapedTuple))
             {
-                var streamContent = new StreamContent(context.Request.Body);
-                requestMessage.Content = streamContent;
+                var tapedResponse = tapedTuple.Item1;
+                var tapedBody = tapedTuple.Item2;
+                CloneResponseMessageTo(outgoingResponse, tapedResponse, tapedBody);
+            }
+            else
+            {
+                var outgoingRequest = CloneRequestMessage(incomingRequest);
+                RewriteDestination(outgoingRequest, incomingRequest);
+
+                var incomingResponse = await _httpClient.SendAsync(outgoingRequest, HttpCompletionOption.ResponseHeadersRead, context.RequestAborted);
+                var body = await incomingResponse.Content.ReadAsByteArrayAsync();
+                _tapes[requestHash] = Tuple.Create(incomingResponse, body);
+                CloneResponseMessageTo(outgoingResponse, incomingResponse, body);
+            }
+        }
+
+        private static HttpRequestMessage CloneRequestMessage(HttpRequest originalRequest)
+        {
+            var clonedRequest = new HttpRequestMessage { Method = new HttpMethod(originalRequest.Method) };
+
+            if(CanRequestContainBody(originalRequest.Method))
+            {
+                clonedRequest.Content = new StreamContent(originalRequest.Body);
+            }
+            CloneHeaders(originalRequest, clonedRequest);
+
+            return clonedRequest;
+        }
+
+        private static void CloneResponseMessageTo(HttpResponse outgoingResponse, HttpResponseMessage incomingResponse, byte[] body)
+        {
+            outgoingResponse.StatusCode = (int)incomingResponse.StatusCode;
+            foreach(var header in incomingResponse.Headers)
+            {
+                outgoingResponse.Headers[header.Key] = header.Value.ToArray();
             }
 
-            // Copy the request headers
-            foreach (var header in context.Request.Headers)
+            foreach(var header in incomingResponse.Content.Headers)
             {
-                if (!requestMessage.Headers.TryAddWithoutValidation(header.Key, header.Value.ToArray()) && requestMessage.Content != null)
-                {
-                    requestMessage.Content?.Headers.TryAddWithoutValidation(header.Key, header.Value.ToArray());
-                }
+                outgoingResponse.Headers[header.Key] = header.Value.ToArray();
             }
 
-            requestMessage.Headers.Host = _options.Host + ":" + _options.Port;
-            var uriString = $"http://{_options.Host}:{_options.Port}{context.Request.PathBase}{context.Request.Path}{context.Request.QueryString}";
-            requestMessage.RequestUri = new Uri(uriString);
-            requestMessage.Method = new HttpMethod(context.Request.Method);
-            using (var responseMessage = await _httpClient.SendAsync(requestMessage, HttpCompletionOption.ResponseHeadersRead, context.RequestAborted))
+            // SendAsync removes chunking from the response. This removes the header so it doesn't expect a chunked response.
+            outgoingResponse.Headers.Remove("transfer-encoding");
+            foreach(var b in body)
             {
-                context.Response.StatusCode = (int)responseMessage.StatusCode;
-                foreach (var header in responseMessage.Headers)
-                {
-                    context.Response.Headers[header.Key] = header.Value.ToArray();
-                }
+                outgoingResponse.Body.WriteByte(b);
+            }
+        }
 
-                foreach (var header in responseMessage.Content.Headers)
-                {
-                    context.Response.Headers[header.Key] = header.Value.ToArray();
-                }
+        private void RewriteDestination(HttpRequestMessage clonedRequest, HttpRequest originalRequest)
+        {
+            var uriString = $"{_scheme}://{_options.Host}:{_options.Port}{originalRequest.PathBase}{originalRequest.Path}{originalRequest.QueryString}";
 
-                // SendAsync removes chunking from the response. This removes the header so it doesn't expect a chunked response.
-                context.Response.Headers.Remove("transfer-encoding");
-                await responseMessage.Content.CopyToAsync(context.Response.Body);
+            clonedRequest.RequestUri = new Uri(uriString);
+            clonedRequest.Headers.Host = _options.Host + ":" + _options.Port;
+        }
+
+        private static bool CanRequestContainBody(string requestMethod)
+        {
+            return !HttpMethods.IsGet(requestMethod) &&
+                   !HttpMethods.IsHead(requestMethod) &&
+                   !HttpMethods.IsDelete(requestMethod) &&
+                   !HttpMethods.IsTrace(requestMethod);
+        }
+
+        private static void CloneHeaders(HttpRequest originalRequest, HttpRequestMessage clonedRequestMessage)
+        {
+            foreach(var header in originalRequest.Headers)
+            {
+                if(!clonedRequestMessage.Headers.TryAddWithoutValidation(header.Key, header.Value.ToArray()))
+                {
+                    clonedRequestMessage.Content?.Headers.TryAddWithoutValidation(header.Key, header.Value.ToArray());
+                }
             }
         }
     }
