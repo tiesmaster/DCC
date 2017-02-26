@@ -1,3 +1,5 @@
+move DCC stuff to middleware stuff
+
 cleanup startup
     remove all bullshit AddCommandLine(), AddEnvironmentVariables()
     combine program and startup
