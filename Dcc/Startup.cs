@@ -26,6 +26,7 @@ namespace Tiesmaster.Dcc
         public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
         {
             loggerFactory.AddConsole();
+            loggerFactory.AddDebug();
 
             if(env.IsDevelopment())
             {

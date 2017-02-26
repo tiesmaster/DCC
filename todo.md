@@ -8,4 +8,6 @@ DCC stuff
 
     add storing the tapes on disk
 
+	extract Http{Request,Response}{,Message} logic to helpers 
+
 fix libuv missing
