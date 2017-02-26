@@ -1,6 +1,4 @@
-﻿using System.IO;
-
-using Microsoft.AspNetCore.Builder;
+﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -27,11 +25,6 @@ namespace Tiesmaster.Dcc
         {
             loggerFactory.AddConsole();
             loggerFactory.AddDebug();
-
-            if(env.IsDevelopment())
-            {
-                app.UseDeveloperExceptionPage();
-            }
 
             app.RunDcc(new DccOptions { Host = "localhost", Port = "3000"});
         }
