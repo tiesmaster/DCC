@@ -1,23 +1,20 @@
-// Copyright (c) .NET Foundation. All rights reserved.
-// Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
-
 using System;
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Builder;
+
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
 
-namespace Microsoft.AspNetCore.Proxy
+namespace Tiesmaster.Dcc
 {
-    public class ProxyMiddleware
+    public class DccMiddleware
     {
         private readonly RequestDelegate _next;
         private readonly HttpClient _httpClient;
-        private readonly ProxyOptions _options;
+        private readonly DccOptions _options;
 
-        public ProxyMiddleware(RequestDelegate next, IOptions<ProxyOptions> options)
+        public DccMiddleware(RequestDelegate next, IOptions<DccOptions> options)
         {
             if (next == null)
             {

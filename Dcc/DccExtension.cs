@@ -1,13 +1,11 @@
-// Copyright (c) .NET Foundation. All rights reserved.
-// Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
-
 using System;
-using Microsoft.AspNetCore.Proxy;
+
+using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Options;
 
-namespace Microsoft.AspNetCore.Builder
+namespace Tiesmaster.Dcc
 {
-    public static class ProxyExtension
+    public static class DccExtension
     {
         /// <summary>
         /// Sends request to remote server as specified in options
@@ -20,7 +18,7 @@ namespace Microsoft.AspNetCore.Builder
                 throw new ArgumentNullException(nameof(app));
             }
 
-            app.UseMiddleware<ProxyMiddleware>();
+            app.UseMiddleware<DccMiddleware>();
         }
 
         /// <summary>
@@ -28,7 +26,7 @@ namespace Microsoft.AspNetCore.Builder
         /// </summary>
         /// <param name="app"></param>
         /// <param name="options">Options for setting port, host, and scheme</param>
-        public static void RunProxy(this IApplicationBuilder app, ProxyOptions options)
+        public static void RunProxy(this IApplicationBuilder app, Tiesmaster.Dcc.DccOptions options)
         {
             if (app == null)
             {
@@ -39,7 +37,7 @@ namespace Microsoft.AspNetCore.Builder
                 throw new ArgumentNullException(nameof(options));
             }
 
-            app.UseMiddleware<ProxyMiddleware>(Options.Create(options));
+            app.UseMiddleware<DccMiddleware>(Options.Create(options));
         }
     }
 }
