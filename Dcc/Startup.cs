@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
 namespace Tiesmaster.Dcc
@@ -9,13 +8,9 @@ namespace Tiesmaster.Dcc
     {
         public static void Main()
         {
-            var config = new ConfigurationBuilder()
-                .Build();
-
             var host = new WebHostBuilder()
-                .UseConfiguration(config)
-                .UseKestrel()
                 .UseStartup<Startup>()
+                .UseKestrel()
                 .Build();
 
             host.Run();
