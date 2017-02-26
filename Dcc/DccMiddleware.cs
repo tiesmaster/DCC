@@ -10,23 +10,16 @@ namespace Tiesmaster.Dcc
 {
     public class DccMiddleware
     {
-        private readonly RequestDelegate _next;
         private readonly HttpClient _httpClient;
         private readonly DccOptions _options;
 
         public DccMiddleware(RequestDelegate next, IOptions<DccOptions> options)
         {
-            if (next == null)
-            {
-                throw new ArgumentNullException(nameof(next));
-            }
-
             if (options == null)
             {
                 throw new ArgumentNullException(nameof(options));
             }
 
-            _next = next;
             _options = options.Value;
 
             if (string.IsNullOrEmpty(_options.Host))

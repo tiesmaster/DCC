@@ -26,7 +26,7 @@ namespace Tiesmaster.Dcc
         /// </summary>
         /// <param name="app"></param>
         /// <param name="options">Options for setting port, host, and scheme</param>
-        public static void RunProxy(this IApplicationBuilder app, Tiesmaster.Dcc.DccOptions options)
+        public static void RunProxy(this IApplicationBuilder app, DccOptions options)
         {
             if (app == null)
             {
