@@ -1,6 +1,3 @@
-cleanup startup
-	remove unneeded packages (IIS, config, etc.)
-
 DCC stuff
     add unit tests
     add logging
