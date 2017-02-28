@@ -288,7 +288,7 @@ __pycache__/
 *.pyc
 
 # Cake - Uncomment if you are using it
-# tools/**
-# !tools/packages.config
+tools/**
+!tools/packages.config
 
 # End of https://www.gitignore.io/api/vim,visualstudio
