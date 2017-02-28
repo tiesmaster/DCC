@@ -8,4 +8,4 @@ DCC stuff
 
 	investigate why the stream approach didn't work
 
-fix libuv missing
+make cake's build.sh work on Windows
