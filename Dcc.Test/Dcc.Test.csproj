@@ -68,6 +68,12 @@
   <ItemGroup>
     <None Include="packages.config" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Dcc\Dcc.csproj">
+      <Project>{1d578bbe-9bc3-4a74-8096-c25619dea185}</Project>
+      <Name>Dcc</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">
       <ItemGroup>
