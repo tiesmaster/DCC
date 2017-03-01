@@ -38,16 +38,16 @@ Task("Build")
     .IsDependentOn("Restore-NuGet-Packages")
     .Does(() =>
 {
-    var libuvSourceFile = Directory("packages") + Directory(libuvPackageDir) + File(libuvFilePathInsideNugetPackage);
-    CopyFileToDirectory(libuvSourceFile, buildDir);
+    MSBuild(solution, settings =>
+    settings.SetConfiguration(configuration));
 });
 
 Task("Copy-Libuv")
     .IsDependentOn("Build")
     .Does(() =>
 {
-    MSBuild(solution, settings =>
-    settings.SetConfiguration(configuration));
+    var libuvSourceFile = Directory("packages") + Directory(libuvPackageDir) + File(libuvFilePathInsideNugetPackage);
+    CopyFileToDirectory(libuvSourceFile, buildDir);
 });
 
 Task("Run")
