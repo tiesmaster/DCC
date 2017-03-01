@@ -38,8 +38,16 @@ Task("Build")
     .IsDependentOn("Restore-NuGet-Packages")
     .Does(() =>
 {
-    MSBuild(solution, settings =>
-    settings.SetConfiguration(configuration));
+    if(IsRunningOnWindows())
+    {
+      MSBuild(solution, settings =>
+        settings.SetConfiguration(configuration));
+    }
+    else
+    {
+      XBuild(solution, settings =>
+        settings.SetConfiguration(configuration));
+    }
 });
 
 Task("Copy-Libuv")
