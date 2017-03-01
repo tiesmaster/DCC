@@ -1,6 +1,6 @@
 DCC stuff
-    add logging
     add unit tests
+    add logging
 
     add storing the tapes on disk
 
