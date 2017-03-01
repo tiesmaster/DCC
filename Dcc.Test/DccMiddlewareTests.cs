@@ -1,4 +1,6 @@
-﻿using Xunit;
+﻿using FluentAssertions;
+
+using Xunit;
 
 namespace Dcc.Test
 {
@@ -7,7 +9,7 @@ namespace Dcc.Test
         [Fact]
         public void SanityTest()
         {
-            Assert.True(true);
+            true.Should().BeTrue();
         }
     }
 }
