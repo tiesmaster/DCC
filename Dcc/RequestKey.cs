@@ -1,3 +1,6 @@
+using System.Net.Http;
+using System.Threading.Tasks;
+
 using Microsoft.AspNetCore.Http;
 
 namespace Tiesmaster.Dcc
@@ -11,6 +14,12 @@ namespace Tiesmaster.Dcc
         {
             _method = request.Method;
             _path = request.Path;
+        }
+
+        public async Task<TapedResponse> CreateTapeFromAsync(HttpResponseMessage httpResponseMessage)
+        {
+            var body = await httpResponseMessage.Content.ReadAsByteArrayAsync();
+            return new HttpClientTapedResponse(this, httpResponseMessage, body);
         }
     }
 }

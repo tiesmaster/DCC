@@ -54,7 +54,7 @@ namespace Tiesmaster.Dcc
 
                 var incomingResponse = await ProxyRequestAsync(incomingRequest, context.RequestAborted);
 
-                tapedResponse = await TapedResponse.CreateFromAsync(requestKey, incomingResponse);
+                tapedResponse = await requestKey.CreateTapeFromAsync(incomingResponse);
                 tapedResponse.WriteTo(context.Response);
 
                 _tapeRepository.Store(tapedResponse);
