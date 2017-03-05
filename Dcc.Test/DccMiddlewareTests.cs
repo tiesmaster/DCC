@@ -98,7 +98,7 @@ namespace Dcc.Test
             await server.CreateClient().GetStringAsync("test");
 
             // act
-            var result = await server.CreateClient().GetStringAsync("test");
+            await server.CreateClient().GetAsync("test");
 
             // assert
             invocationCount.Should().Be(1);
