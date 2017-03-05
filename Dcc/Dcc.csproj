@@ -255,7 +255,7 @@
     <Compile Include="DccExtension.cs" />
     <Compile Include="DccMiddleware.cs" />
     <Compile Include="DccOptions.cs" />
-    <Compile Include="RequestHash.cs" />
+    <Compile Include="RequestKey.cs" />
     <Compile Include="Startup.cs" />
   </ItemGroup>
   <ItemGroup>

@@ -18,8 +18,8 @@ namespace Tiesmaster.Dcc
         // TODO: fix resharper settings
         private const string _scheme = "http";
 
-        private static readonly Dictionary<RequestHash, Tuple<HttpResponseMessage, byte[]>> _tapes =
-            new Dictionary<RequestHash, Tuple<HttpResponseMessage, byte[]>>();
+        private static readonly Dictionary<RequestKey, Tuple<HttpResponseMessage, byte[]>> _tapes =
+            new Dictionary<RequestKey, Tuple<HttpResponseMessage, byte[]>>();
 
         private readonly ILogger _logger;
 
@@ -46,7 +46,7 @@ namespace Tiesmaster.Dcc
         public async Task Invoke(HttpContext context)
         {
             var incomingRequest = context.Request;
-            var requestHash = new RequestHash(incomingRequest);
+            var requestHash = new RequestKey(incomingRequest);
 
             var outgoingResponse = context.Response;
 
