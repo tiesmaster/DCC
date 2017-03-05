@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 
@@ -46,15 +45,15 @@ namespace Tiesmaster.Dcc
         public async Task Invoke(HttpContext context)
         {
             var incomingRequest = context.Request;
-            var requestHash = new RequestKey(incomingRequest);
+            var requestKey = new RequestKey(incomingRequest);
 
             var outgoingResponse = context.Response;
 
             TapedResponse tapedResponse;
-            if(_tapes.TryGetValue(requestHash, out tapedResponse))
+            if(_tapes.TryGetValue(requestKey, out tapedResponse))
             {
                 _logger.LogInformation("request was previously recorded, playing back tape");
-                CloneResponseMessageTo(outgoingResponse, tapedResponse);
+                tapedResponse.WriteTo(outgoingResponse);
             }
             else
             {
@@ -68,30 +67,8 @@ namespace Tiesmaster.Dcc
 
                 var body = await incomingResponse.Content.ReadAsByteArrayAsync();
                 tapedResponse = new TapedResponse(incomingResponse, body);
-                _tapes[requestHash] = tapedResponse;
-                CloneResponseMessageTo(outgoingResponse, tapedResponse);
-            }
-        }
-
-        private static void CloneResponseMessageTo(HttpResponse outgoingResponse, TapedResponse response)
-        {
-            var incomingResponse = response.ResponseMessage;
-            outgoingResponse.StatusCode = (int)incomingResponse.StatusCode;
-            foreach(var header in incomingResponse.Headers)
-            {
-                outgoingResponse.Headers[header.Key] = header.Value.ToArray();
-            }
-
-            foreach(var header in incomingResponse.Content.Headers)
-            {
-                outgoingResponse.Headers[header.Key] = header.Value.ToArray();
-            }
-
-            // SendAsync removes chunking from the response. This removes the header so it doesn't expect a chunked response.
-            outgoingResponse.Headers.Remove("transfer-encoding");
-            foreach(var b in response.Body)
-            {
-                outgoingResponse.Body.WriteByte(b);
+                _tapes[requestKey] = tapedResponse;
+                tapedResponse.WriteTo(outgoingResponse);
             }
         }
 
