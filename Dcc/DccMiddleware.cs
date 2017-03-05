@@ -54,10 +54,10 @@ namespace Tiesmaster.Dcc
 
                 var incomingResponse = await ProxyRequestAsync(incomingRequest, context.RequestAborted);
 
-                tapedResponse = await TapedResponse.CreateFromAsync(incomingResponse);
+                tapedResponse = await TapedResponse.CreateFromAsync(requestKey, incomingResponse);
                 tapedResponse.WriteTo(context.Response);
 
-                _tapeRepository.Store(requestKey, tapedResponse);
+                _tapeRepository.Store(tapedResponse);
             }
         }
 

@@ -9,7 +9,7 @@ namespace Tiesmaster.Dcc
         private readonly HttpResponseMessage _responseMessage;
         private readonly byte[] _body;
 
-        public HttpClientTapedResponse(HttpResponseMessage responseMessage, byte[] body)
+        public HttpClientTapedResponse(RequestKey requestKey, HttpResponseMessage responseMessage, byte[] body) : base(requestKey)
         {
             _responseMessage = responseMessage;
             _body = body;

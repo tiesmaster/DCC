@@ -13,9 +13,9 @@ namespace Tiesmaster.Dcc
             return tapedResponse;
         }
 
-        public void Store(RequestKey requestKey, TapedResponse tapedResponse)
+        public void Store(TapedResponse tapedResponse)
         {
-            _tapes[requestKey] = tapedResponse;
+            _tapes[tapedResponse.RequestKey] = tapedResponse;
         }
     }
 }
