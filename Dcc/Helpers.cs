@@ -1,10 +1,12 @@
-﻿using System.Net.Http;
+﻿using System.Linq;
+using System.Net.Http;
+using System.Net.Http.Headers;
 
 using Microsoft.AspNetCore.Http;
 
 namespace Tiesmaster.Dcc
 {
-    internal class Helpers
+    internal static class Helpers
     {
         internal static HttpRequestMessage CreateHttpRequestMessageFrom(HttpRequest originalRequest)
         {
@@ -27,6 +29,14 @@ namespace Tiesmaster.Dcc
                 {
                     clonedRequestMessage.Content?.Headers.TryAddWithoutValidation(header.Key, header.Value.ToArray());
                 }
+            }
+        }
+
+        internal static void CopyHeadersTo(HttpResponse aspnetResponse, HttpHeaders httpClientHeaders)
+        {
+            foreach(var header in httpClientHeaders)
+            {
+                aspnetResponse.Headers[header.Key] = header.Value.ToArray();
             }
         }
 
