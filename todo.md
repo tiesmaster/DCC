@@ -1,6 +1,4 @@
 DCC stuff
-    add logging
-
     add storing the tapes on disk
 
 	extract Http{Request,Response}{,Message} logic to helpers

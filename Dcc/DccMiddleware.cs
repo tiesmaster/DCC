@@ -21,7 +21,7 @@ namespace Tiesmaster.Dcc
         private static readonly Dictionary<RequestHash, Tuple<HttpResponseMessage, byte[]>> _tapes =
             new Dictionary<RequestHash, Tuple<HttpResponseMessage, byte[]>>();
 
-        private ILogger _logger;
+        private readonly ILogger _logger;
 
         public DccMiddleware(RequestDelegate next, IOptions<DccOptions> options, ILoggerFactory loggerFactory)
         {
