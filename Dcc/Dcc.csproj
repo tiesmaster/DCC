@@ -251,6 +251,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Helpers.cs" />
+    <Compile Include="HttpClientTapedResponse.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="DccExtension.cs" />
     <Compile Include="DccMiddleware.cs" />
