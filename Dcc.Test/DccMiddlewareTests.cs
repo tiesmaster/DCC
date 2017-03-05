@@ -37,12 +37,7 @@ namespace Dcc.Test
         {
             // arrange
             var expectedResponse = Guid.NewGuid().ToString();
-            var clientHandlerMock = new HttpClientHandlerMock(req =>
-            {
-                var response = new HttpResponseMessage(HttpStatusCode.OK);
-                response.Content = new StringContent(expectedResponse);
-                return response;
-            });
+            var clientHandlerMock = HttpClientHandlerMock.CreateWithExpectedResponse(HttpStatusCode.OK, expectedResponse);
 
             var server = CreateDccTestServerWith(clientHandlerMock, listeningPort: 1234);
 
@@ -57,7 +52,6 @@ namespace Dcc.Test
         public async Task SecondInvokeWillReturnStoredTape()
         {
             // arrange
-
             var invocationCount = 0;
             var clientHandlerMock = new HttpClientHandlerMock(req =>
             {
@@ -96,6 +90,13 @@ namespace Dcc.Test
         private class HttpClientHandlerMock : HttpMessageHandler
         {
             private readonly Func<HttpRequestMessage, HttpResponseMessage> _sendCallback;
+
+            public static HttpClientHandlerMock CreateWithExpectedResponse(HttpStatusCode httpStatusCode, string expectedResponse)
+            {
+                var response = new HttpResponseMessage(httpStatusCode) {Content = new StringContent(expectedResponse)};
+
+                return new HttpClientHandlerMock(_ => response);
+            }
 
             public HttpClientHandlerMock(Func<HttpRequestMessage, HttpResponseMessage> sendCallback)
             {
