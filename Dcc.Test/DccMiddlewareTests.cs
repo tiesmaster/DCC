@@ -36,6 +36,8 @@ namespace Dcc.Test
         public async Task FirstInvokeWillProxyRequest()
         {
             // arrange
+            var listeningPort = 1234;
+
             var expectedResponse = Guid.NewGuid().ToString();
             var clientHandlerMock = new HttpClientHandlerMock
             {
@@ -47,18 +49,7 @@ namespace Dcc.Test
                 }
             };
 
-            var builder = new WebHostBuilder()
-                .Configure(app =>
-                {
-                    app.RunDcc(
-                        new DccOptions
-                        {
-                            Host = "localhost",
-                            Port = "1234",
-                            BackChannelMessageHandler = clientHandlerMock
-                        });
-                });
-            var server = new TestServer(builder);
+            var server = CreateDccTestServerWith(listeningPort, clientHandlerMock);
 
             // act
             var result = await server.CreateClient().GetStringAsync("test");
@@ -66,34 +57,26 @@ namespace Dcc.Test
             // assert
             result.Should().Be(expectedResponse);
         }
+
         [Fact]
         public async Task SecondInvokeWillReturnStoredTape()
         {
             // arrange
+            var listeningPort = 1235;
+
             var invocationCount = 0;
             var clientHandlerMock = new HttpClientHandlerMock
             {
                 Sender = req =>
                 {
                     invocationCount++;
-                    var response = new HttpResponseMessage(HttpStatusCode.OK);
+                    var response  = new HttpResponseMessage(HttpStatusCode.OK);
                     response.Content = new StringContent(Guid.NewGuid().ToString());
                     return response;
                 }
             };
 
-            var builder = new WebHostBuilder()
-                .Configure(app =>
-                {
-                    app.RunDcc(
-                        new DccOptions
-                        {
-                            Host = "localhost",
-                            Port = "1235",
-                            BackChannelMessageHandler = clientHandlerMock
-                        });
-                });
-            var server = new TestServer(builder);
+            var server = CreateDccTestServerWith(listeningPort, clientHandlerMock);
             await server.CreateClient().GetStringAsync("test");
 
             // act
@@ -101,6 +84,19 @@ namespace Dcc.Test
 
             // assert
             invocationCount.Should().Be(1);
+        }
+
+        private static TestServer CreateDccTestServerWith(int listeningPort, HttpMessageHandler httpClientMessageHandler)
+        {
+            var dccOptions = new DccOptions
+            {
+                Host = "localhost",
+                Port = listeningPort.ToString(),
+                BackChannelMessageHandler = httpClientMessageHandler
+            };
+
+            var builder = new WebHostBuilder().Configure(app => app.RunDcc(dccOptions));
+            return new TestServer(builder);
         }
 
         private static IOptions<DccOptions> CreateOptions() => Options.Create(new DccOptions {Host = "test"});
