@@ -36,13 +36,13 @@ namespace Dcc.Test
         public async Task FirstInvokeWillProxyRequest()
         {
             // arrange
-            var expectedResponse = Guid.NewGuid().ToString();
+            var expectedResponse = CreateAnonymousString();
             var clientHandlerMock = HttpClientHandlerMock.CreateWithExpectedResponse(HttpStatusCode.OK, expectedResponse);
 
             var server = CreateDccTestServerWith(clientHandlerMock, listeningPort: 1234);
 
             // act
-            var result = await server.CreateClient().GetStringAsync("test");
+            var result = await server.CreateClient().GetStringAsync("test-endpoint");
 
             // assert
             result.Should().Be(expectedResponse);
@@ -52,13 +52,13 @@ namespace Dcc.Test
         public async Task SecondInvokeWillReturnStoredTape()
         {
             // arrange
-            var clientHandlerMock = HttpClientHandlerMock.CreateWithExpectedResponse(HttpStatusCode.OK, Guid.NewGuid().ToString());
+            var clientHandlerMock = HttpClientHandlerMock.CreateWithExpectedResponse(HttpStatusCode.OK, CreateAnonymousString());
 
             var server = CreateDccTestServerWith(clientHandlerMock, listeningPort: 1235);
-            await server.CreateClient().GetStringAsync("test");
+            await server.CreateClient().GetStringAsync("test-endpoint");
 
             // act
-            await server.CreateClient().GetAsync("test");
+            await server.CreateClient().GetAsync("test-endpoint");
 
             // assert
             clientHandlerMock.SendCallbackInvocationCount.Should().Be(1);
@@ -77,8 +77,9 @@ namespace Dcc.Test
             return new TestServer(builder);
         }
 
-        private static IOptions<DccOptions> CreateOptions() => Options.Create(new DccOptions {Host = "test"});
         private Task NoOpNext(HttpContext context) => Task.CompletedTask;
+        private static string CreateAnonymousString() => Guid.NewGuid().ToString();
+        private static IOptions<DccOptions> CreateOptions() => Options.Create(new DccOptions {Host = "localhost"});
 
         private class HttpClientHandlerMock : HttpMessageHandler
         {
