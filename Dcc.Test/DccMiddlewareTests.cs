@@ -37,6 +37,15 @@ namespace Dcc.Test
         {
             // arrange
             var expectedResponse = Guid.NewGuid().ToString();
+            var clientHandlerMock = new HttpClientHandlerMock
+            {
+                Sender = req =>
+                {
+                    var response = new HttpResponseMessage(HttpStatusCode.OK);
+                    response.Content = new StringContent(expectedResponse);
+                    return response;
+                }
+            };
 
             var builder = new WebHostBuilder()
                 .Configure(app =>
@@ -46,17 +55,8 @@ namespace Dcc.Test
                         {
                             Host = "localhost",
                             Port = "1234",
-                            BackChannelMessageHandler = new HttpClientHandlerMock
-                                                        {
-                                                            Sender = req =>
-                                                            {
-                                                                var response = new HttpResponseMessage(HttpStatusCode.OK);
-                                                                response.Content = new StringContent(expectedResponse);
-                                                                return response;
-                                                            }
-                                                        }
+                            BackChannelMessageHandler = clientHandlerMock
                         });
-
                 });
             var server = new TestServer(builder);
 
@@ -71,6 +71,16 @@ namespace Dcc.Test
         {
             // arrange
             var invocationCount = 0;
+            var clientHandlerMock = new HttpClientHandlerMock
+            {
+                Sender = req =>
+                {
+                    invocationCount++;
+                    var response = new HttpResponseMessage(HttpStatusCode.OK);
+                    response.Content = new StringContent(Guid.NewGuid().ToString());
+                    return response;
+                }
+            };
 
             var builder = new WebHostBuilder()
                 .Configure(app =>
@@ -80,18 +90,8 @@ namespace Dcc.Test
                         {
                             Host = "localhost",
                             Port = "1235",
-                            BackChannelMessageHandler = new HttpClientHandlerMock
-                            {
-                                Sender = req =>
-                                {
-                                    invocationCount++;
-                                    var response = new HttpResponseMessage(HttpStatusCode.OK);
-                                    response.Content = new StringContent(Guid.NewGuid().ToString());
-                                    return response;
-                                }
-                            }
+                            BackChannelMessageHandler = clientHandlerMock
                         });
-
                 });
             var server = new TestServer(builder);
             await server.CreateClient().GetStringAsync("test");
