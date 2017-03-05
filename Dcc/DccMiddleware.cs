@@ -11,14 +11,9 @@ namespace Tiesmaster.Dcc
 {
     public class DccMiddleware
     {
-        private readonly HttpClient _httpClient;
         private readonly DccOptions _options;
-        // ReSharper disable once InconsistentNaming
-        // TODO: fix resharper settings
-        private const string _scheme = "http";
-
-        private static readonly Dictionary<RequestKey, TapedResponse> _tapes = new Dictionary<RequestKey, TapedResponse>();
-
+        private readonly HttpClient _httpClient;
+        private readonly Dictionary<RequestKey, TapedResponse> _tapes = new Dictionary<RequestKey, TapedResponse>();
         private readonly ILogger _logger;
 
         // ReSharper disable once UnusedParameter.Local
@@ -47,13 +42,11 @@ namespace Tiesmaster.Dcc
             var incomingRequest = context.Request;
             var requestKey = new RequestKey(incomingRequest);
 
-            var outgoingResponse = context.Response;
-
             TapedResponse tapedResponse;
             if(_tapes.TryGetValue(requestKey, out tapedResponse))
             {
                 _logger.LogInformation("request was previously recorded, playing back tape");
-                tapedResponse.WriteTo(outgoingResponse);
+                tapedResponse.WriteTo(context.Response);
             }
             else
             {
@@ -65,16 +58,16 @@ namespace Tiesmaster.Dcc
                 var incomingResponse = await _httpClient.SendAsync(
                     outgoingRequest, HttpCompletionOption.ResponseHeadersRead, context.RequestAborted);
 
-                var body = await incomingResponse.Content.ReadAsByteArrayAsync();
-                tapedResponse = new TapedResponse(incomingResponse, body);
+                tapedResponse = await TapedResponse.CreateFromAsync(incomingResponse);
+                tapedResponse.WriteTo(context.Response);
+
                 _tapes[requestKey] = tapedResponse;
-                tapedResponse.WriteTo(outgoingResponse);
             }
         }
 
         private void RewriteDestination(HttpRequestMessage clonedRequest, HttpRequest originalRequest)
         {
-            var uriString = $"{_scheme}://{_options.Host}:{_options.Port}{originalRequest.PathBase}{originalRequest.Path}{originalRequest.QueryString}";
+            var uriString = $"http://{_options.Host}:{_options.Port}{originalRequest.PathBase}{originalRequest.Path}{originalRequest.QueryString}";
 
             clonedRequest.RequestUri = new Uri(uriString);
             clonedRequest.Headers.Host = _options.Host + ":" + _options.Port;

@@ -1,22 +1,34 @@
 ﻿using System.Linq;
 using System.Net.Http;
+using System.Threading.Tasks;
 
 using Microsoft.AspNetCore.Http;
 
 namespace Tiesmaster.Dcc
 {
-    public class TapedResponse
+    public abstract class TapedResponse
+    {
+        public static async Task<TapedResponse> CreateFromAsync(HttpResponseMessage httpResponseMessage)
+        {
+            var body = await httpResponseMessage.Content.ReadAsByteArrayAsync();
+            return new HttpClientTapedResponse(httpResponseMessage, body);
+        }
+
+        public abstract void WriteTo(HttpResponse aspnetResponse);
+    }
+
+    internal class HttpClientTapedResponse : TapedResponse
     {
         private readonly HttpResponseMessage _responseMessage;
         private readonly byte[] _body;
 
-        public TapedResponse(HttpResponseMessage responseMessage, byte[] body)
+        public HttpClientTapedResponse(HttpResponseMessage responseMessage, byte[] body)
         {
             _responseMessage = responseMessage;
             _body = body;
         }
 
-        public void WriteTo(HttpResponse aspnetResponse)
+        public override void WriteTo(HttpResponse aspnetResponse)
         {
             aspnetResponse.StatusCode = (int)_responseMessage.StatusCode;
             foreach(var header in _responseMessage.Headers)
