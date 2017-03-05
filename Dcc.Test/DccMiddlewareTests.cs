@@ -52,14 +52,7 @@ namespace Dcc.Test
         public async Task SecondInvokeWillReturnStoredTape()
         {
             // arrange
-            var invocationCount = 0;
-            var clientHandlerMock = new HttpClientHandlerMock(req =>
-            {
-                invocationCount++;
-                var response = new HttpResponseMessage(HttpStatusCode.OK);
-                response.Content = new StringContent(Guid.NewGuid().ToString());
-                return response;
-            });
+            var clientHandlerMock = HttpClientHandlerMock.CreateWithExpectedResponse(HttpStatusCode.OK, Guid.NewGuid().ToString());
 
             var server = CreateDccTestServerWith(clientHandlerMock, listeningPort: 1235);
             await server.CreateClient().GetStringAsync("test");
@@ -68,7 +61,7 @@ namespace Dcc.Test
             await server.CreateClient().GetAsync("test");
 
             // assert
-            invocationCount.Should().Be(1);
+            clientHandlerMock.SendCallbackInvocationCount.Should().Be(1);
         }
 
         private static TestServer CreateDccTestServerWith(HttpMessageHandler httpClientMessageHandler, int listeningPort)
@@ -98,13 +91,18 @@ namespace Dcc.Test
                 return new HttpClientHandlerMock(_ => response);
             }
 
-            public HttpClientHandlerMock(Func<HttpRequestMessage, HttpResponseMessage> sendCallback)
+            public int SendCallbackInvocationCount { get; private set; }
+
+            private HttpClientHandlerMock(Func<HttpRequestMessage, HttpResponseMessage> sendCallback)
             {
                 _sendCallback = sendCallback;
             }
 
             protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
-                => Task.FromResult(_sendCallback(request));
+            {
+                SendCallbackInvocationCount++;
+                return Task.FromResult(_sendCallback(request));
+            }
         }
     }
 }
