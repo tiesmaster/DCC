@@ -70,7 +70,6 @@ namespace Dcc.Test
         public async Task SecondInvokeWillReturnStoredTape()
         {
             // arrange
-            var expectedResponse = Guid.NewGuid().ToString();
             var invocationCount = 0;
 
             var builder = new WebHostBuilder()
@@ -87,7 +86,7 @@ namespace Dcc.Test
                                 {
                                     invocationCount++;
                                     var response = new HttpResponseMessage(HttpStatusCode.OK);
-                                    response.Content = new StringContent(expectedResponse);
+                                    response.Content = new StringContent(Guid.NewGuid().ToString());
                                     return response;
                                 }
                             }
