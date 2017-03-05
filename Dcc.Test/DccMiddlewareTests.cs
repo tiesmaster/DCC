@@ -46,7 +46,7 @@ namespace Dcc.Test
                         {
                             Host = "localhost",
                             Port = "1234",
-                            BackChannelMessageHandler = new TestMessageHandler
+                            BackChannelMessageHandler = new HttpClientHandlerMock
                                                         {
                                                             Sender = req =>
                                                             {
@@ -80,7 +80,7 @@ namespace Dcc.Test
                         {
                             Host = "localhost",
                             Port = "1235",
-                            BackChannelMessageHandler = new TestMessageHandler
+                            BackChannelMessageHandler = new HttpClientHandlerMock
                             {
                                 Sender = req =>
                                 {
@@ -106,7 +106,7 @@ namespace Dcc.Test
         private static IOptions<DccOptions> CreateOptions() => Options.Create(new DccOptions {Host = "test"});
         private Task NoOpNext(HttpContext context) => Task.CompletedTask;
 
-        private class TestMessageHandler : HttpMessageHandler
+        private class HttpClientHandlerMock : HttpMessageHandler
         {
             public Func<HttpRequestMessage, HttpResponseMessage> Sender { get; set; }
 
@@ -120,6 +120,5 @@ namespace Dcc.Test
                 return Task.FromResult<HttpResponseMessage>(null);
             }
         }
-
     }
 }
