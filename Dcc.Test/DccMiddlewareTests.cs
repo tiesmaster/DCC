@@ -36,8 +36,6 @@ namespace Dcc.Test
         public async Task FirstInvokeWillProxyRequest()
         {
             // arrange
-            var listeningPort = 1234;
-
             var expectedResponse = Guid.NewGuid().ToString();
             var clientHandlerMock = new HttpClientHandlerMock(req =>
             {
@@ -46,7 +44,7 @@ namespace Dcc.Test
                 return response;
             });
 
-            var server = CreateDccTestServerWith(listeningPort, clientHandlerMock);
+            var server = CreateDccTestServerWith(clientHandlerMock, listeningPort: 1234);
 
             // act
             var result = await server.CreateClient().GetStringAsync("test");
@@ -59,7 +57,6 @@ namespace Dcc.Test
         public async Task SecondInvokeWillReturnStoredTape()
         {
             // arrange
-            var listeningPort = 1235;
 
             var invocationCount = 0;
             var clientHandlerMock = new HttpClientHandlerMock(req =>
@@ -70,7 +67,7 @@ namespace Dcc.Test
                 return response;
             });
 
-            var server = CreateDccTestServerWith(listeningPort, clientHandlerMock);
+            var server = CreateDccTestServerWith(clientHandlerMock, listeningPort: 1235);
             await server.CreateClient().GetStringAsync("test");
 
             // act
@@ -80,7 +77,7 @@ namespace Dcc.Test
             invocationCount.Should().Be(1);
         }
 
-        private static TestServer CreateDccTestServerWith(int listeningPort, HttpMessageHandler httpClientMessageHandler)
+        private static TestServer CreateDccTestServerWith(HttpMessageHandler httpClientMessageHandler, int listeningPort)
         {
             var dccOptions = new DccOptions
             {
