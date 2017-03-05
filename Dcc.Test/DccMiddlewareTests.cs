@@ -33,6 +33,31 @@ namespace Dcc.Test
         }
 
         [Fact]
+        public void DccOptionsAreMandatory()
+        {
+            // arrange
+
+            // act
+            Action act = () => new DccMiddleware(NoOpNext, null);
+
+            // assert
+            act.ShouldThrow<ArgumentNullException>();
+        }
+
+        [Fact]
+        public void HostOnDccOptionsAreMandatory()
+        {
+            // arrange
+            var options = Options.Create(new DccOptions {Host = null});
+
+            // act
+            Action act = () => new DccMiddleware(NoOpNext, options);
+
+            // assert
+            act.ShouldThrow<ArgumentException>();
+        }
+
+        [Fact]
         public async Task FirstInvokeWillProxyRequest()
         {
             // arrange
