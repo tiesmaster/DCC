@@ -5,6 +5,7 @@ using System.Net.Http;
 using System.Threading.Tasks;
 
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace Tiesmaster.Dcc
@@ -20,7 +21,9 @@ namespace Tiesmaster.Dcc
         private static readonly Dictionary<RequestHash, Tuple<HttpResponseMessage, byte[]>> _tapes =
             new Dictionary<RequestHash, Tuple<HttpResponseMessage, byte[]>>();
 
-        public DccMiddleware(RequestDelegate next, IOptions<DccOptions> options)
+        private ILogger _logger;
+
+        public DccMiddleware(RequestDelegate next, IOptions<DccOptions> options, ILoggerFactory loggerFactory)
         {
             if (options == null)
             {
@@ -35,6 +38,8 @@ namespace Tiesmaster.Dcc
             }
 
             _httpClient = new HttpClient(_options.BackChannelMessageHandler ?? new HttpClientHandler());
+
+            _logger = loggerFactory.CreateLogger<DccMiddleware>();
         }
 
         public async Task Invoke(HttpContext context)
@@ -47,12 +52,16 @@ namespace Tiesmaster.Dcc
             Tuple<HttpResponseMessage, byte[]> tapedTuple;
             if(_tapes.TryGetValue(requestHash, out tapedTuple))
             {
+                _logger.LogInformation("request was previously recorded, playing back tape");
+
                 var tapedResponse = tapedTuple.Item1;
                 var tapedBody = tapedTuple.Item2;
                 CloneResponseMessageTo(outgoingResponse, tapedResponse, tapedBody);
             }
             else
             {
+                _logger.LogInformation("could not find recorded tape for request, passing through, and recording it");
+
                 var outgoingRequest = CloneRequestMessage(incomingRequest);
                 RewriteDestination(outgoingRequest, incomingRequest);
 

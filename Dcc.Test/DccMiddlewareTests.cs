@@ -20,41 +20,29 @@ namespace Dcc.Test
     public class DccMiddlewareTests
     {
         [Fact]
-        public void CanCreate()
-        {
-            // arrange
-            var options = CreateOptions();
-
-            // act
-            var sut = new DccMiddleware(NoOpNext, options);
-
-            // assert
-            sut.Should().NotBeNull();
-        }
-
-        [Fact]
         public void DccOptionsAreMandatory()
         {
-            // arrange
+            Action act = () => CreateSutWithOptions(null);
 
-            // act
-            Action act = () => new DccMiddleware(NoOpNext, null);
-
-            // assert
             act.ShouldThrow<ArgumentNullException>();
         }
 
         [Fact]
-        public void HostOnDccOptionsAreMandatory()
+        public void HostOnDccOptionsIisMandatory()
         {
-            // arrange
             var options = Options.Create(new DccOptions {Host = null});
 
-            // act
-            Action act = () => new DccMiddleware(NoOpNext, options);
+            Action act = () => CreateSutWithOptions(options);
 
-            // assert
             act.ShouldThrow<ArgumentException>();
+        }
+
+        [Fact]
+        public void LoggerFactoryIsMandatory()
+        {
+            Action act = () => new DccMiddleware(NoOpNext, CreateOptions(), loggerFactory: null);
+
+            act.ShouldThrow<ArgumentNullException>();
         }
 
         [Fact]
@@ -89,6 +77,7 @@ namespace Dcc.Test
             clientHandlerMock.SendCallbackInvocationCount.Should().Be(1);
         }
 
+
         private static TestServer CreateDccTestServerWith(HttpMessageHandler httpClientMessageHandler, int listeningPort)
         {
             var dccOptions = new DccOptions
@@ -102,9 +91,10 @@ namespace Dcc.Test
             return new TestServer(builder);
         }
 
+        private void CreateSutWithOptions(IOptions<DccOptions> options) => new DccMiddleware(NoOpNext, options, null);
         private Task NoOpNext(HttpContext context) => Task.CompletedTask;
         private static string CreateAnonymousString() => Guid.NewGuid().ToString();
-        private static IOptions<DccOptions> CreateOptions() => Options.Create(new DccOptions {Host = "localhost"});
+        private static IOptions<DccOptions> CreateOptions() => Options.Create(new DccOptions { Host = "localhost" });
 
         private class HttpClientHandlerMock : HttpMessageHandler
         {
