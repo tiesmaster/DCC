@@ -23,6 +23,7 @@ namespace Tiesmaster.Dcc
 
         private readonly ILogger _logger;
 
+        // ReSharper disable once UnusedParameter.Local
         public DccMiddleware(RequestDelegate next, IOptions<DccOptions> options, ILoggerFactory loggerFactory)
         {
             if (options == null)
@@ -76,7 +77,7 @@ namespace Tiesmaster.Dcc
         {
             var clonedRequest = new HttpRequestMessage { Method = new HttpMethod(originalRequest.Method) };
 
-            if(CanRequestContainBody(originalRequest.Method))
+            if(Helpers.CanRequestContainBody(originalRequest.Method))
             {
                 clonedRequest.Content = new StreamContent(originalRequest.Body);
             }
@@ -112,14 +113,6 @@ namespace Tiesmaster.Dcc
 
             clonedRequest.RequestUri = new Uri(uriString);
             clonedRequest.Headers.Host = _options.Host + ":" + _options.Port;
-        }
-
-        private static bool CanRequestContainBody(string requestMethod)
-        {
-            return !HttpMethods.IsGet(requestMethod) &&
-                   !HttpMethods.IsHead(requestMethod) &&
-                   !HttpMethods.IsDelete(requestMethod) &&
-                   !HttpMethods.IsTrace(requestMethod);
         }
 
         private static void CloneHeaders(HttpRequest originalRequest, HttpRequestMessage clonedRequestMessage)
