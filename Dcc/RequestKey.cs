@@ -11,7 +11,7 @@ namespace Tiesmaster.Dcc
     public struct RequestKey
     {
         private readonly string _method;
-        private readonly PathString _path;
+        private readonly string _path;
 
         public RequestKey(HttpRequest request)
         {
