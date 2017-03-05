@@ -257,6 +257,7 @@
     <Compile Include="DccOptions.cs" />
     <Compile Include="RequestKey.cs" />
     <Compile Include="Startup.cs" />
+    <Compile Include="TapedResponse.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

@@ -18,8 +18,7 @@ namespace Tiesmaster.Dcc
         // TODO: fix resharper settings
         private const string _scheme = "http";
 
-        private static readonly Dictionary<RequestKey, Tuple<HttpResponseMessage, byte[]>> _tapes =
-            new Dictionary<RequestKey, Tuple<HttpResponseMessage, byte[]>>();
+        private static readonly Dictionary<RequestKey, TapedResponse> _tapes = new Dictionary<RequestKey, TapedResponse>();
 
         private readonly ILogger _logger;
 
@@ -43,6 +42,7 @@ namespace Tiesmaster.Dcc
             _logger = loggerFactory.CreateLogger<DccMiddleware>();
         }
 
+        // ReSharper disable once UnusedMember.Global
         public async Task Invoke(HttpContext context)
         {
             var incomingRequest = context.Request;
@@ -50,14 +50,11 @@ namespace Tiesmaster.Dcc
 
             var outgoingResponse = context.Response;
 
-            Tuple<HttpResponseMessage, byte[]> tapedTuple;
-            if(_tapes.TryGetValue(requestHash, out tapedTuple))
+            TapedResponse tapedResponse;
+            if(_tapes.TryGetValue(requestHash, out tapedResponse))
             {
                 _logger.LogInformation("request was previously recorded, playing back tape");
-
-                var tapedResponse = tapedTuple.Item1;
-                var tapedBody = tapedTuple.Item2;
-                CloneResponseMessageTo(outgoingResponse, tapedResponse, tapedBody);
+                CloneResponseMessageTo(outgoingResponse, tapedResponse);
             }
             else
             {
@@ -70,13 +67,15 @@ namespace Tiesmaster.Dcc
                     outgoingRequest, HttpCompletionOption.ResponseHeadersRead, context.RequestAborted);
 
                 var body = await incomingResponse.Content.ReadAsByteArrayAsync();
-                _tapes[requestHash] = Tuple.Create(incomingResponse, body);
-                CloneResponseMessageTo(outgoingResponse, incomingResponse, body);
+                tapedResponse = new TapedResponse(incomingResponse, body);
+                _tapes[requestHash] = tapedResponse;
+                CloneResponseMessageTo(outgoingResponse, tapedResponse);
             }
         }
 
-        private static void CloneResponseMessageTo(HttpResponse outgoingResponse, HttpResponseMessage incomingResponse, byte[] body)
+        private static void CloneResponseMessageTo(HttpResponse outgoingResponse, TapedResponse response)
         {
+            var incomingResponse = response.ResponseMessage;
             outgoingResponse.StatusCode = (int)incomingResponse.StatusCode;
             foreach(var header in incomingResponse.Headers)
             {
@@ -90,7 +89,7 @@ namespace Tiesmaster.Dcc
 
             // SendAsync removes chunking from the response. This removes the header so it doesn't expect a chunked response.
             outgoingResponse.Headers.Remove("transfer-encoding");
-            foreach(var b in body)
+            foreach(var b in response.Body)
             {
                 outgoingResponse.Body.WriteByte(b);
             }
