@@ -39,15 +39,12 @@ namespace Dcc.Test
             var listeningPort = 1234;
 
             var expectedResponse = Guid.NewGuid().ToString();
-            var clientHandlerMock = new HttpClientHandlerMock
+            var clientHandlerMock = new HttpClientHandlerMock(req =>
             {
-                Sender = req =>
-                {
-                    var response = new HttpResponseMessage(HttpStatusCode.OK);
-                    response.Content = new StringContent(expectedResponse);
-                    return response;
-                }
-            };
+                var response = new HttpResponseMessage(HttpStatusCode.OK);
+                response.Content = new StringContent(expectedResponse);
+                return response;
+            });
 
             var server = CreateDccTestServerWith(listeningPort, clientHandlerMock);
 
@@ -65,16 +62,13 @@ namespace Dcc.Test
             var listeningPort = 1235;
 
             var invocationCount = 0;
-            var clientHandlerMock = new HttpClientHandlerMock
+            var clientHandlerMock = new HttpClientHandlerMock(req =>
             {
-                Sender = req =>
-                {
-                    invocationCount++;
-                    var response  = new HttpResponseMessage(HttpStatusCode.OK);
-                    response.Content = new StringContent(Guid.NewGuid().ToString());
-                    return response;
-                }
-            };
+                invocationCount++;
+                var response = new HttpResponseMessage(HttpStatusCode.OK);
+                response.Content = new StringContent(Guid.NewGuid().ToString());
+                return response;
+            });
 
             var server = CreateDccTestServerWith(listeningPort, clientHandlerMock);
             await server.CreateClient().GetStringAsync("test");
@@ -104,17 +98,15 @@ namespace Dcc.Test
 
         private class HttpClientHandlerMock : HttpMessageHandler
         {
-            public Func<HttpRequestMessage, HttpResponseMessage> Sender { get; set; }
+            private readonly Func<HttpRequestMessage, HttpResponseMessage> _sendCallback;
+
+            public HttpClientHandlerMock(Func<HttpRequestMessage, HttpResponseMessage> sendCallback)
+            {
+                _sendCallback = sendCallback;
+            }
 
             protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
-            {
-                if(Sender != null)
-                {
-                    return Task.FromResult(Sender(request));
-                }
-
-                return Task.FromResult<HttpResponseMessage>(null);
-            }
+                => Task.FromResult(_sendCallback(request));
         }
     }
 }
