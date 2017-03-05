@@ -63,27 +63,16 @@ namespace Tiesmaster.Dcc
             {
                 _logger.LogInformation("could not find recorded tape for request, passing through, and recording it");
 
-                var outgoingRequest = CloneRequestMessage(incomingRequest);
+                var outgoingRequest = Helpers.CreateHttpRequestMessageFrom(incomingRequest);
                 RewriteDestination(outgoingRequest, incomingRequest);
 
-                var incomingResponse = await _httpClient.SendAsync(outgoingRequest, HttpCompletionOption.ResponseHeadersRead, context.RequestAborted);
+                var incomingResponse = await _httpClient.SendAsync(
+                    outgoingRequest, HttpCompletionOption.ResponseHeadersRead, context.RequestAborted);
+
                 var body = await incomingResponse.Content.ReadAsByteArrayAsync();
                 _tapes[requestHash] = Tuple.Create(incomingResponse, body);
                 CloneResponseMessageTo(outgoingResponse, incomingResponse, body);
             }
-        }
-
-        private static HttpRequestMessage CloneRequestMessage(HttpRequest originalRequest)
-        {
-            var clonedRequest = new HttpRequestMessage { Method = new HttpMethod(originalRequest.Method) };
-
-            if(Helpers.CanRequestContainBody(originalRequest.Method))
-            {
-                clonedRequest.Content = new StreamContent(originalRequest.Body);
-            }
-            CloneHeaders(originalRequest, clonedRequest);
-
-            return clonedRequest;
         }
 
         private static void CloneResponseMessageTo(HttpResponse outgoingResponse, HttpResponseMessage incomingResponse, byte[] body)
@@ -113,17 +102,6 @@ namespace Tiesmaster.Dcc
 
             clonedRequest.RequestUri = new Uri(uriString);
             clonedRequest.Headers.Host = _options.Host + ":" + _options.Port;
-        }
-
-        private static void CloneHeaders(HttpRequest originalRequest, HttpRequestMessage clonedRequestMessage)
-        {
-            foreach(var header in originalRequest.Headers)
-            {
-                if(!clonedRequestMessage.Headers.TryAddWithoutValidation(header.Key, header.Value.ToArray()))
-                {
-                    clonedRequestMessage.Content?.Headers.TryAddWithoutValidation(header.Key, header.Value.ToArray());
-                }
-            }
         }
     }
 }
